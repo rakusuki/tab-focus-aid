@@ -46,3 +46,6 @@ Rebuild the bookmark URL from the source using a JavaScript-aware minifier when 
 ## License
 
 MIT. Copyright (c) 2026 ynishi_works.
+## Diagnostic report / 診断コピー（v0.3.0）
+
+各候補の **診断コピー** を押すと、JSON形式のレポートがクリップボードにコピーされます。要素のタグ、祖先タグ、フォーカス状態、検出根拠、関連CSS、サイズを出力します。要素内テキスト、HTML、ページURL、ID、class、フォーム入力値は収集しません。送信は行いません。公開Issueへ貼り付ける前にレポートとスクリーンショットを必ず確認してください。候補一覧に出ない要素は現時点では診断ボタンから選択できません。

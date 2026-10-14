@@ -127,3 +127,25 @@ test('nested service access elements create only one Tab stop per service card',
   await page.keyboard.press('Enter');
   await expect.poll(()=>page.evaluate(()=>window.nestedClicks)).toBe(1);
 });
+
+test('text action search focuses a matching service card click target', async ({page}) => {
+  await panel(page).locator('#actionToggle').click();
+  await panel(page).locator('#actionSearch').fill('Target');
+  await expect(panel(page).locator('#actionResults button').first()).toBeVisible();
+  await panel(page).locator('#actionResults button').first().click();
+  await expect(page.locator('#target')).toBeFocused();
+  await page.keyboard.press('Enter');
+  await expect.poll(()=>page.evaluate(()=>window.activationCount)).toBe(1);
+});
+
+test('issue picker collects structural data without visible text', async ({page}) => {
+  await panel(page).locator('#picker').click();
+  await page.locator('#target').click({force:true});
+  await expect(panel(page)).toBeVisible();
+  const report=await panel(page).locator('#issueText').inputValue();
+  const data=JSON.parse(report);
+  expect(data.tag).toBe('DIV');
+  expect(report).not.toContain('Target');
+  expect(report).not.toContain('http');
+  await expect(panel(page).locator('#issueOpen')).toBeVisible();
+});

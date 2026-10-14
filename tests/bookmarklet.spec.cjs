@@ -87,3 +87,24 @@ test('hidden panel does not trap keyboard navigation', async ({page}) => {
   await page.keyboard.press('Tab');
   await expect(page.locator('#excluded')).toBeFocused();
 });
+
+test('focus on narrow access overlay highlights the visible parent service card', async ({page}) => {
+  await page.evaluate(() => {
+    const card = document.createElement('div');
+    card.className='eventhub-service';
+    card.innerHTML='<div class="card-default" style="width:240px;height:110px;border:1px solid black;position:relative"><div class="access-link" style="height:1px;width:240px;position:absolute;top:60px" onclick="window.overlayClicks=(window.overlayClicks||0)+1"></div></div>';
+    document.body.append(card);
+  });
+  await page.evaluate(bookmarklet.slice('javascript:'.length));
+  await panel(page).locator('#apply').click();
+  const overlay = page.locator('.eventhub-service .access-link');
+  await overlay.focus();
+  await expect(overlay).toBeFocused();
+  const card = page.locator('.eventhub-service .card-default');
+  await expect(card).toHaveAttribute('data-tab-focus-aid-highlight','1');
+  await expect.poll(()=>card.evaluate(el=>getComputedStyle(el).outlineStyle)).toBe('solid');
+  await page.keyboard.press('Enter');
+  await expect.poll(()=>page.evaluate(()=>window.overlayClicks)).toBe(1);
+  await page.locator('#after').focus();
+  await expect(card).not.toHaveAttribute('data-tab-focus-aid-highlight','1');
+});

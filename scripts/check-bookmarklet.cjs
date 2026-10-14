@@ -46,3 +46,14 @@ syntax(htmlURL.replace(/^javascript:/i,'').trim(), 'register.html URL payload');
 assert.ok(!/[\r\n]/.test(bookmark), 'bookmark URL must be one line');
 console.log('PASS match: register.html and bookmarklet.txt');
 console.log('All bookmarklet checks passed.');
+
+const extensionSource=fs.readFileSync(path.join(root,'extension','tab-focus-aid.js'),'utf8');
+assert.equal(extensionSource,source,'extension focus engine must match root source');
+syntax(extensionSource,'extension/tab-focus-aid.js');
+for(const filename of ['background.js','popup.js']){
+ syntax(fs.readFileSync(path.join(root,'extension',filename),'utf8'),'extension/'+filename);
+}
+const manifest=JSON.parse(fs.readFileSync(path.join(root,'extension','manifest.json'),'utf8'));
+assert.equal(manifest.manifest_version,3);
+assert.ok(manifest.optional_host_permissions?.includes('https://*/*'));
+console.log('PASS extension source parity and Manifest V3');

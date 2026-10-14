@@ -21,6 +21,7 @@ test('opens the candidate panel and makes a selected element Tab-reachable', asy
   await expect(page.locator('#target')).not.toHaveAttribute('tabindex','0');
   await panel(page).locator('#apply').click();
   await expect(page.locator('#target')).toHaveAttribute('tabindex','0');
+  await expect(panel(page)).toBeHidden();
   await page.locator('#before').focus();
   await page.keyboard.press('Tab');
   await expect(page.locator('#target')).toBeFocused();
@@ -46,6 +47,7 @@ test('Space activates a button-like target', async ({page}) => {
 
 test('restore removes attributes, events and panel', async ({page}) => {
   await panel(page).locator('#apply').click();
+  await page.evaluate(bookmarklet.slice('javascript:'.length));
   await panel(page).locator('#restore').click();
   await expect(page.locator('#target')).not.toHaveAttribute('tabindex','0');
   await expect(page.locator('#target')).not.toHaveAttribute('data-tab-focus-aid','1');
@@ -60,4 +62,28 @@ test('relaunch reopens a dismissed panel without duplicating it', async ({page})
   await page.evaluate(bookmarklet.slice('javascript:'.length));
   await expect(panel(page)).toBeVisible();
   await expect(page.locator('#tab-focus-aid-panel')).toHaveCount(1);
+});
+
+test('close buttons hide the panel but keep page keyboard activation available', async ({page}) => {
+  await panel(page).locator('#apply').click();
+  await expect(panel(page)).toBeHidden();
+  await page.evaluate(bookmarklet.slice('javascript:'.length));
+  await panel(page).locator('#close').click();
+  await expect(panel(page)).toBeHidden();
+  await page.locator('#target').focus();
+  await page.keyboard.press('Enter');
+  await expect.poll(()=>page.evaluate(()=>window.activationCount)).toBe(1);
+  await page.evaluate(bookmarklet.slice('javascript:'.length));
+  await panel(page).locator('#dismiss').click();
+  await expect(panel(page)).toBeHidden();
+});
+
+test('hidden panel does not trap keyboard navigation', async ({page}) => {
+  await panel(page).locator('#apply').click();
+  await expect(panel(page)).toBeHidden();
+  await page.locator('#before').focus();
+  await page.keyboard.press('Tab');
+  await expect(page.locator('#target')).toBeFocused();
+  await page.keyboard.press('Tab');
+  await expect(page.locator('#excluded')).toBeFocused();
 });

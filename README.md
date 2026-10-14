@@ -68,3 +68,24 @@ node scripts/regression-test.cjs
 ```
 
 検査に失敗した場合はGitHub Actionsが失敗します。マージを禁止したい場合は、GitHubのブランチ保護ルールで `verify` を必須チェックに設定してください。構文検査はブラウザ上の動作成功まで保証するものではありません。
+
+## Chromium E2Eテスト (Playwright)
+
+`tests/bookmarklet.spec.cjs` は、実際に配布する `bookmarklet.txt` のJavaScriptをChromiumのページで実行し、以下を確認します。
+
+- 候補管理パネルの表示
+- 要素の選択とTabフォーカス、青枠（outline）の表示
+- Enter / Space によるクリック
+- 特定候補の除外
+- 元に戻す機能とイベントリスナーの解除
+- パネルの閉じる・再表示
+
+ローカル実行:
+
+```sh
+npm install
+npx playwright install chromium
+npm run test:e2e
+```
+
+GitHub Actionsは `verify`（構文検査）と `e2e`（Chromiumブラウザ検査）を並行実行します。失敗時にはレポートをArtifactとして保存します。外部サイトは操作せず、テスト用のローカルHTMLを使います。

@@ -7,6 +7,7 @@
   const hints = '[onclick],[onmousedown],[onmouseup],[role="button"],[role="link"],[role="menuitem"],[role="tab"],[data-tt-click-send],[data-action],[data-click],.access-link';
   const records = new Map(), candidates = new Map();
   let nextId = 1, observer, closed = false, pending = false, filter = '';
+  let priorFocus = document.activeElement;
   const host = document.createElement('div');
   host.id = 'tab-focus-aid-panel';
   host.style.cssText = 'all:initial!important;position:fixed!important;top:16px!important;right:16px!important;z-index:2147483647!important;';
@@ -110,6 +111,7 @@
       if (item.selected) activate(el); else rollback(el);
     }
     render();
+    hidePanel();
   }
   function escapeText(el,text) { el.textContent = text; }
   function diagnosticData(el,item){
@@ -159,6 +161,22 @@
     if (shown.length > 400) {const li=document.createElement('li');li.textContent='先頭400件を表示中。検索して絞り込んでください。';items.append(li);}
   }
   function renderCount(){escapeText($('count'),`${candidates.size} 候補 / ${[...candidates.values()].filter(c=>c.selected).length} 選択 / ${records.size} 有効`);}
+  function hidePanel() {
+    host.style.setProperty('display', 'none', 'important');
+    const fallback = [...records.keys()].find(el => el.isConnected);
+    const destination = priorFocus && priorFocus.isConnected && priorFocus !== host
+      ? priorFocus : fallback;
+    if (destination && typeof destination.focus === 'function') {
+      destination.focus({preventScroll:true});
+    } else if (shadow.activeElement) {
+      shadow.activeElement.blur();
+    }
+  }
+  function showPanel() {
+    priorFocus = document.activeElement;
+    host.style.setProperty('display', 'block', 'important');
+    render();
+  }
   function restore() {
     closed=true;observer?.disconnect();
     for(const el of [...records.keys()]) rollback(el);
@@ -167,12 +185,12 @@
   const style=document.createElement('style');
   style.textContent='[data-tab-focus-aid="1"]:focus-visible{outline:3px solid #1677ff!important;outline-offset:3px!important}';
   document.head.append(style);document.documentElement.append(host);
-  $('close').onclick=$('dismiss').onclick=()=>{host.style.display='none';};
+  $('close').onclick=$('dismiss').onclick=hidePanel;
   $('search').oninput=e=>{filter=e.target.value.toLowerCase();render();};
   $('all').onclick=()=>{for(const [el,c] of candidates) if ((describe(el)+' '+el.tagName+' '+el.className+' '+c.why).toLowerCase().includes(filter))c.selected=true;render();};
   $('none').onclick=()=>{for(const [el,c] of candidates) if ((describe(el)+' '+el.tagName+' '+el.className+' '+c.why).toLowerCase().includes(filter))c.selected=false;render();};
   $('rescan').onclick=scan;$('apply').onclick=apply;$('restore').onclick=restore;
-  window[KEY]={open(){host.style.display='block';render();},restore};
+  window[KEY]={open:showPanel,restore};
   observer=new MutationObserver(mutations => {
     if (mutations.every(m => inPanel(m.target))) return;
     if(pending||closed)return;pending=true;

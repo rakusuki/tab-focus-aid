@@ -95,3 +95,7 @@ GitHub Actionsは `verify`（構文検査）と `e2e`（Chromiumブラウザ検�
 HTMLリンクをブックマークバーへドラッグした際、ChromeがJavaScript URLを保存しない場合があります。`register.html` の「ブックマークレットURLをコピー」を利用し、Chromeのブックマーク編集画面のURL欄に貼り付けてください。保存後のURLが `javascript:` で始まるか確認してください。
 
 ※ `register.html` 内で直接動作することと、ブックマークバーへの登録成功は別の問題です。自動検査では直接コピー用のURL文字列も `bookmarklet.txt` と一致するか検査します。
+
+## パネル表示位置と登録方法（修正）
+
+`register.html` 内のリンクをブックマークバーへドラッグ＆ドロップして登録できます。起動時のパネルは、ページ末尾ではなく現在のビューポート右上に固定表示されます。原因は `all:initial` が `position:fixed` を上書きしていたCSS指定順序であり、リセット後に `position:fixed` を設定することで修正しました。

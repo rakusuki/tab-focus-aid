@@ -96,6 +96,7 @@ test('focus on narrow access overlay highlights the visible parent service card'
     document.body.append(card);
   });
   await page.evaluate(bookmarklet.slice('javascript:'.length));
+  await panel(page).locator('#rescan').click();
   await panel(page).locator('#apply').click();
   const overlay = page.locator('.eventhub-service .access-link');
   await overlay.focus();

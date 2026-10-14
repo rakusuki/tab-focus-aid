@@ -1,7 +1,7 @@
-/* Tab Focus Aid v0.2.0 — MIT License. Runs locally, no network calls. */
+/* Tab Focus Aid v0.3.0 — MIT License. Runs locally, no network calls. */
 (() => {
   'use strict';
-  const KEY = '__tabFocusAid_v2__';
+  const KEY = '__tabFocusAid_v3__';
   if (window[KEY]) { window[KEY].open(); return; }
   const native = 'a[href],area[href],button,input,select,textarea,summary,iframe,[contenteditable=""],[contenteditable="true"]';
   const hints = '[onclick],[onmousedown],[onmouseup],[role="button"],[role="link"],[role="menuitem"],[role="tab"],[data-tt-click-send],[data-action],[data-click],.access-link';
@@ -112,6 +112,33 @@
     render();
   }
   function escapeText(el,text) { el.textContent = text; }
+  function diagnosticData(el,item){
+    const css=getComputedStyle(el),rect=el.getBoundingClientRect();
+    const ancestors=[];let a=el.parentElement;
+    for(let i=0;i<4&&a;i++,a=a.parentElement)ancestors.push(a.tagName.toLowerCase());
+    return {tool:'Tab Focus Aid',version:'0.3.0',privacy:'No text, HTML, URLs, IDs, classes, or input values collected',
+      element:{tag:el.tagName.toLowerCase(),ancestorTags:ancestors,
+        attributePresent:{onclick:el.hasAttribute('onclick'),dataAction:el.hasAttribute('data-action'),dataClick:el.hasAttribute('data-click'),dataTtClickSend:el.hasAttribute('data-tt-click-send'),ariaLabel:el.hasAttribute('aria-label')},
+        role:['button','link','tab','menuitem'].includes(el.getAttribute('role'))?el.getAttribute('role'):(el.hasAttribute('role')?'[other]':null),
+        tabindexAttribute:el.getAttribute('tabindex'),tabIndexProperty:el.tabIndex,
+        focused:document.activeElement===el,applied:records.has(el),selected:item.selected,detectionReason:item.why,
+        style:{display:css.display,visibility:css.visibility,cursor:css.cursor,outlineStyle:css.outlineStyle,outlineWidth:css.outlineWidth,outlineOffset:css.outlineOffset,overflow:css.overflow,opacity:css.opacity},
+        sizePx:{width:Math.round(rect.width),height:Math.round(rect.height)}},
+      environment:{chromeBased:/Chrome\\//.test(navigator.userAgent),insideIframe:window.top!==window.self},
+      note:'Review this report and any screenshot before sharing publicly.'};
+  }
+  async function copyDiagnostic(el,item){
+    const report=JSON.stringify(diagnosticData(el,item),null,2);
+    try{
+      if(navigator.clipboard&&window.isSecureContext)await navigator.clipboard.writeText(report);
+      else {
+        const t=document.createElement('textarea');t.value=report;t.style.cssText='position:fixed;left:-9999px';
+        document.body.append(t);t.select();const ok=document.execCommand('copy');t.remove();
+        if(!ok)throw new Error('Clipboard unavailable');
+      }
+      $('count').textContent='診断レポートをコピーしました。内容を確認して共有してください。';
+    }catch(e){window.prompt('診断レポートを手動でコピーしてください。',report);}
+  }
   function render() {
     if (closed) return;
     const items = $('items');
@@ -119,7 +146,7 @@
     escapeText($('count'),`${candidates.size} 候補 / ${[...candidates.values()].filter(c=>c.selected).length} 選択 / ${records.size} 有効`);
     items.replaceChildren();
     for (const [el,c] of shown.slice(0,400)) {
-      const li = document.createElement('li'), box = document.createElement('input'), label = document.createElement('label'), nm = document.createElement('span'), meta = document.createElement('span'), go = document.createElement('button');
+      const li = document.createElement('li'), box = document.createElement('input'), label = document.createElement('label'), nm = document.createElement('span'), meta = document.createElement('span'), go = document.createElement('button'), diagnostic = document.createElement('button');
       box.type='checkbox';box.id='tfa-'+c.id;box.checked=c.selected;
       box.onchange=()=>{c.selected=box.checked; renderCount();};
       label.htmlFor=box.id;nm.className='name';meta.className='detail';
@@ -127,7 +154,7 @@
       meta.textContent=`${el.tagName.toLowerCase()} · ${c.why}${records.has(el)?' · 有効':''}`;
       label.append(nm,meta);go.type='button';go.textContent='位置';
       go.title='候補の場所までスクロール';go.onclick=()=>{el.scrollIntoView({block:'center',behavior:'smooth'});el.style.outline='3px solid orange';setTimeout(()=>{el.style.removeProperty('outline');},1300);};
-      li.append(box,label,go);items.append(li);
+      diagnostic.type='button';diagnostic.textContent='診断コピー';diagnostic.title='機密情報を除外した診断情報をコピー';diagnostic.onclick=()=>copyDiagnostic(el,c);li.append(box,label,go,diagnostic);items.append(li);
     }
     if (shown.length > 400) {const li=document.createElement('li');li.textContent='先頭400件を表示中。検索して絞り込んでください。';items.append(li);}
   }

@@ -124,7 +124,7 @@
         focused:document.activeElement===el,applied:records.has(el),selected:item.selected,detectionReason:item.why,
         style:{display:css.display,visibility:css.visibility,cursor:css.cursor,outlineStyle:css.outlineStyle,outlineWidth:css.outlineWidth,outlineOffset:css.outlineOffset,overflow:css.overflow,opacity:css.opacity},
         sizePx:{width:Math.round(rect.width),height:Math.round(rect.height)}},
-      environment:{chromeBased:/Chrome\\//.test(navigator.userAgent),insideIframe:window.top!==window.self},
+      environment:{chromeBased:navigator.userAgent.includes('Chrome/'),insideIframe:window.top!==window.self},
       note:'Review this report and any screenshot before sharing publicly.'};
   }
   async function copyDiagnostic(el,item){

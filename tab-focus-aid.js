@@ -33,9 +33,9 @@
     .note{margin:0;padding:0 12px 11px;color:#555;font-size:11px}
   </style><section class="panel" role="dialog" aria-label="Tab Focus Aid 候補管理">
     <header><h2>Tab Focus Aid</h2><button id="close" title="パネルを閉じる">×</button></header>
-    <div class="tools"><input id="search" type="search" placeholder="要素名・CSS・根拠で絞り込み" aria-label="候補の検索"/>
+    <div class="tools"><button id="picker" type="button">未検出要素を指定</button><button id="report" type="button">Issue報告</button><button id="actionToggle" type="button">アクション検索</button><input id="search" type="search" placeholder="要素名・CSS・根拠で絞り込み" aria-label="候補の検索"/>
     <button id="all">表示中を選択</button><button id="none">表示中を除外</button><button id="rescan">再検出</button></div>
-    <div id="count" aria-live="polite"></div><ul class="items" id="items"></ul>
+    <div id="count" aria-live="polite"></div><div class="tools"><input id="actionSearch" type="search" placeholder="ページ内の操作を検索"/><ul class="items" id="actionResults"></ul><textarea id="issueText" rows="5" style="width:100%" aria-label="報告内容"></textarea><button id="issueCopy">報告文コピー</button><button id="issueOpen">GitHub Issue画面</button></div><ul class="items" id="items"></ul>
     <div class="footer"><button class="primary" id="apply">選択を反映</button><button id="restore">すべて元に戻す</button><button id="dismiss">閉じる</button></div>
     <p class="note">候補は推定結果です。選択後に「選択を反映」。Enter / Space（button相当）の操作を補助します。外部送信なし。</p>
   </section>`;
@@ -261,4 +261,69 @@
   });
   observer.observe(document.body,{childList:true,subtree:true});
   scan();
+
+  function reportData(el) {
+    if(!el)return {tool:'Tab Focus Aid',problem:'General issue'};
+    const st=getComputedStyle(el);
+    return {tool:'Tab Focus Aid',problem:'Missing focus or activation',
+      tag:el.tagName,tabindexPresent:el.hasAttribute('tabindex'),
+      rolePresent:el.hasAttribute('role'),hasInlineClick:el.hasAttribute('onclick'),
+      detected:candidates.has(el),applied:records.has(el),
+      style:{display:st.display,visibility:st.visibility,cursor:st.cursor,outline:st.outlineStyle},
+      warning:'No URLs, page text, attribute values or form values collected. Review before sharing.'};
+  }
+  function report(el){$('issueText').value=JSON.stringify(reportData(el),null,2);showPanel();}
+  function pick(){
+    hidePanel();
+    function click(e) {
+      if(host.contains(e.target))return;
+      e.preventDefault();e.stopImmediatePropagation();
+      document.removeEventListener('click',click,true);
+      document.removeEventListener('keydown',key,true);
+      report(e.target);
+    }
+    function key(e) {
+      if(e.key==='Escape'){
+        document.removeEventListener('click',click,true);
+        document.removeEventListener('keydown',key,true);
+        showPanel();
+      }
+    }
+    document.addEventListener('click',click,true);
+    document.addEventListener('keydown',key,true);
+  }
+  function searchActions(){
+    const q=$('actionSearch').value.normalize('NFKC').toLowerCase().trim();
+    const ul=$('actionResults');ul.replaceChildren();
+    if(!q)return;
+    const elements=new Set([...candidates.keys(),...document.querySelectorAll('a[href],button,[role="button"],[role="link"]')]);
+    let n=0;
+    for(const el of elements){
+      if(n>=25||!visible(el))continue;
+      const card=el.closest('.eventhub-service');
+      const title=card?.querySelector('.card-title')?.textContent||'';
+      const label=[el.getAttribute('aria-label'),el.getAttribute('title'),title,el.textContent].filter(Boolean).join(' ').slice(0,150);
+      if(!label.normalize('NFKC').toLowerCase().includes(q))continue;
+      const li=document.createElement('li'),b=document.createElement('button');
+      b.textContent=label.slice(0,70);
+      b.onclick=()=>{
+        if(!records.has(el)&&!el.matches(native))activate(el);
+        hidePanel();el.scrollIntoView({block:'center'});el.focus({preventScroll:true});
+      };
+      li.append(b);ul.append(li);n++;
+    }
+  }
+  $('picker').onclick=pick;
+  $('report').onclick=()=>report(null);
+  $('actionToggle').onclick=()=>$('actionSearch').focus();
+  $('actionSearch').oninput=searchActions;
+  $('issueCopy').onclick=async()=>{
+    const field=$('issueText');field.focus();field.select();
+    try{await navigator.clipboard.writeText(field.value)}catch(e){}
+  };
+  $('issueOpen').onclick=()=>{
+    if(!confirm('レポート内容を確認しましたか？GitHubのIssue作成画面を開きます。'))return;
+    const u='https://github.com/rakusuki/tab-focus-aid/issues/new?title='+encodeURIComponent('Bug report')+'&body='+encodeURIComponent($('issueText').value);
+    window.open(u,'_blank','noopener');
+  };
 })();

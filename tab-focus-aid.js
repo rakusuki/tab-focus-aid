@@ -177,14 +177,55 @@
     host.style.setProperty('display', 'block', 'important');
     render();
   }
+
+  // An invisible or narrow click overlay can have a focus outline only a few
+  // pixels high. Highlight its visible service card while keeping focus on
+  // the actual keyboard-activated element.
+  let highlighted = null;
+  function clearHighlight() {
+    if (highlighted) highlighted.removeAttribute('data-tab-focus-aid-highlight');
+    highlighted = null;
+  }
+  function focusVisualTarget(el) {
+    const serviceCard = el.closest('.eventhub-service');
+    if (serviceCard) {
+      const card = serviceCard.querySelector('.card-default') || serviceCard;
+      if (card.getClientRects().length) return card;
+    }
+    const own = el.getBoundingClientRect();
+    if (own.width >= 24 && own.height >= 16) return el;
+    for (let parent = el.parentElement; parent && parent !== document.body; parent = parent.parentElement) {
+      const box = parent.getBoundingClientRect();
+      if (box.width >= 48 && box.height >= 24 && box.width <= innerWidth * 0.95) return parent;
+    }
+    return el;
+  }
+  function onFocusIn(event) {
+    clearHighlight();
+    const el = event.target;
+    if (!records.has(el)) return;
+    const target = focusVisualTarget(el);
+    if (target !== el) {
+      target.setAttribute('data-tab-focus-aid-highlight','1');
+      highlighted = target;
+    }
+  }
+  function onFocusOut() {
+    clearHighlight();
+  }
   function restore() {
     closed=true;observer?.disconnect();
+    document.removeEventListener('focusin',onFocusIn,true);
+    document.removeEventListener('focusout',onFocusOut,true);
+    clearHighlight();
     for(const el of [...records.keys()]) rollback(el);
     style.remove();host.remove();delete window[KEY];
   }
   const style=document.createElement('style');
-  style.textContent='[data-tab-focus-aid="1"]:focus-visible{outline:3px solid #1677ff!important;outline-offset:3px!important}';
+  style.textContent='[data-tab-focus-aid="1"]:focus-visible{outline:3px solid #1677ff!important;outline-offset:3px!important}[data-tab-focus-aid-highlight="1"]{outline:3px solid #1677ff!important;outline-offset:3px!important}';
   document.head.append(style);document.documentElement.append(host);
+  document.addEventListener('focusin',onFocusIn,true);
+  document.addEventListener('focusout',onFocusOut,true);
   $('close').onclick=$('dismiss').onclick=hidePanel;
   $('search').oninput=e=>{filter=e.target.value.toLowerCase();render();};
   $('all').onclick=()=>{for(const [el,c] of candidates) if ((describe(el)+' '+el.tagName+' '+el.className+' '+c.why).toLowerCase().includes(filter))c.selected=true;render();};

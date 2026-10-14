@@ -9,7 +9,7 @@
   let nextId = 1, observer, closed = false, pending = false, filter = '';
   const host = document.createElement('div');
   host.id = 'tab-focus-aid-panel';
-  host.style.cssText = 'position:fixed!important;top:16px!important;right:16px!important;z-index:2147483647!important;all:initial!important;';
+  host.style.cssText = 'all:initial!important;position:fixed!important;top:16px!important;right:16px!important;z-index:2147483647!important;';
   const shadow = host.attachShadow({mode:'open'});
   shadow.innerHTML = `<style>
     :host{all:initial} *{box-sizing:border-box}

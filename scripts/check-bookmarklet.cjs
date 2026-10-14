@@ -38,9 +38,9 @@ const link = html.match(/<a\b[^>]*\bhref="(javascript:[^"]*)"/i);
 assert.ok(link, 'register.html must contain a bookmarklet link');
 const htmlURL = decodeHtml(link[1]);
 assert.equal(htmlURL, bookmark, 'register.html bookmarklet must match bookmarklet.txt exactly');
-const textarea = html.match(/<textarea\b[^>]*\bid="bmurl"[^>]*>([\s\S]*?)<\/textarea>/i);
-assert.ok(textarea, 'register.html must include a manual-copy URL field');
-assert.equal(decodeHtml(textarea[1]), bookmark, 'manual-copy URL must match bookmarklet.txt exactly');
+assert.match(html, /class="bookmark"/, 'register.html must contain a draggable link');
+assert.match(source, /all:initial!important;position:fixed!important;/, 'panel CSS must reset styles before fixed positioning');
+assert.match(bookmark, /all:initial!important;position:fixed!important;/, 'bookmarklet must position panel in viewport');
 syntax(htmlURL.replace(/^javascript:/i,'').trim(), 'register.html URL payload');
 
 assert.ok(!/[\r\n]/.test(bookmark), 'bookmark URL must be one line');

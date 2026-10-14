@@ -89,3 +89,9 @@ npm run test:e2e
 ```
 
 GitHub Actionsは `verify`（構文検査）と `e2e`（Chromiumブラウザ検査）を並行実行します。失敗時にはレポートをArtifactとして保存します。外部サイトは操作せず、テスト用のローカルHTMLを使います。
+
+## Chromeのブックマーク登録に関する注意
+
+HTMLリンクをブックマークバーへドラッグした際、ChromeがJavaScript URLを保存しない場合があります。`register.html` の「ブックマークレットURLをコピー」を利用し、Chromeのブックマーク編集画面のURL欄に貼り付けてください。保存後のURLが `javascript:` で始まるか確認してください。
+
+※ `register.html` 内で直接動作することと、ブックマークバーへの登録成功は別の問題です。自動検査では直接コピー用のURL文字列も `bookmarklet.txt` と一致するか検査します。

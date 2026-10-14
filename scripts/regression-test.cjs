@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 'use strict';
-// A regression test proving that syntactically invalid JavaScript cannot pass.
-const fs = require('node:fs');
 const vm = require('node:vm');
 const assert = require('node:assert/strict');
-assert.throws(() => new vm.Script("const broken = /Chrome\\//.test(navigator.userAgent);"), SyntaxError);
-console.log('PASS regression: invalid Chrome regular expression rejected');
+// The escaped slash bug from v0.3.0 must be rejected.
+const malformed = String.raw`const broken = /Chrome\\\\//.test(navigator.userAgent);`;
+assert.throws(() => new vm.Script(malformed), SyntaxError);
+console.log('PASS regression: malformed Chrome regular expression rejected');

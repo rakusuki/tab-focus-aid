@@ -49,3 +49,22 @@ MIT. Copyright (c) 2026 ynishi_works.
 ## Diagnostic report / 診断コピー（v0.3.0）
 
 各候補の **診断コピー** を押すと、JSON形式のレポートがクリップボードにコピーされます。要素のタグ、祖先タグ、フォーカス状態、検出根拠、関連CSS、サイズを出力します。要素内テキスト、HTML、ページURL、ID、class、フォーム入力値は収集しません。送信は行いません。公開Issueへ貼り付ける前にレポートとスクリーンショットを必ず確認してください。候補一覧に出ない要素は現時点では診断ボタンから選択できません。
+
+## 自動検証 (CI)
+
+GitHub Actions の `Bookmarklet checks` は、Push・Pull Request・手動実行時に Node.js 22 で以下を検証します。
+
+- `tab-focus-aid.js` のJavaScript構文
+- `bookmarklet.txt` 内の実行コード構文、`javascript:` プレフィックス、1行形式
+- `register.html` 内のブックマークURL構文
+- HTML内でエスケープされたブックマークURLと `bookmarklet.txt` の完全一致
+- v0.3.0で発生した正規表現構文エラーの回帰テスト
+
+ローカルでも実行できます。
+
+```sh
+node scripts/check-bookmarklet.cjs
+node scripts/regression-test.cjs
+```
+
+検査に失敗した場合はGitHub Actionsが失敗します。マージを禁止したい場合は、GitHubのブランチ保護ルールで `verify` を必須チェックに設定してください。構文検査はブラウザ上の動作成功まで保証するものではありません。

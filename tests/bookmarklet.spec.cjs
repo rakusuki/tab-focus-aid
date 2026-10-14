@@ -109,3 +109,21 @@ test('focus on narrow access overlay highlights the visible parent service card'
   await page.locator('#after').focus();
   await expect(card).not.toHaveAttribute('data-tab-focus-aid-highlight','1');
 });
+
+test('nested service access elements create only one Tab stop per service card', async ({page}) => {
+  await page.evaluate(() => {
+    const card = document.createElement('div');
+    card.className = 'eventhub-service';
+    card.innerHTML = '<div class="card-default"><div class="access" data-tt-click-send="action"><div class="access-link" data-tt-click-send="action" onclick="window.nestedClicks=(window.nestedClicks||0)+1">Nested</div></div></div>';
+    document.body.insertBefore(card, document.querySelector('#after'));
+  });
+  await panel(page).locator('#rescan').click();
+  await panel(page).locator('#apply').click();
+  const parent = page.locator('.eventhub-service .access');
+  const child = page.locator('.eventhub-service .access-link');
+  await expect(parent).not.toHaveAttribute('tabindex','0');
+  await expect(child).toHaveAttribute('tabindex','0');
+  await child.focus();
+  await page.keyboard.press('Enter');
+  await expect.poll(()=>page.evaluate(()=>window.nestedClicks)).toBe(1);
+});

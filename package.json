@@ -1,0 +1,12 @@
+{
+  "name": "tab-focus-aid",
+  "private": true,
+  "version": "0.3.0",
+  "scripts": {
+    "test:syntax": "node scripts/check-bookmarklet.cjs && node scripts/regression-test.cjs",
+    "test:e2e": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.56.1"
+  }
+}

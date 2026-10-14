@@ -14,4 +14,6 @@ jobs:
         with:
           node-version: '22'
       - name: Verify source and generated bookmarklets
-        run: node scripts/check-bookmarklet.cjs
+        run: |
+          node scripts/check-bookmarklet.cjs
+          node scripts/regression-test.cjs

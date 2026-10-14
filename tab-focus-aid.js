@@ -75,6 +75,28 @@
       if (candidates.has(el) || !qualified(el)) return;
       candidates.set(el,{id:nextId++,selected:true,why:reason(el)});
     });
+    // Two nested click overlays in the same service card must not create
+    // separate Tab stops. Prefer the innermost .access-link target.
+    const cards = new Map();
+    for (const [el, candidate] of candidates) {
+      const card = el.closest('.eventhub-service');
+      if (!card || !el.isConnected || !el.closest('.access')) continue;
+      const current = cards.get(card);
+      const rank = (el.matches('.access-link') ? 100 : 0) +
+        (el.hasAttribute('data-tt-click-send') ? 10 : 0) +
+        (el.closest('.access') ? 1 : 0);
+      if (!current || rank > current.rank) {
+        cards.set(card, {element:el, rank});
+      }
+    }
+    for (const [el] of candidates) {
+      const card = el.closest('.eventhub-service');
+      const winner = card && cards.get(card);
+      if (winner && el !== winner.element && el.closest('.access')) {
+        rollback(el);
+        candidates.delete(el);
+      }
+    }
     render();
   }
   function rollback(el) {

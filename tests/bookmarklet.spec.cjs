@@ -149,3 +149,11 @@ test('issue picker collects structural data without visible text', async ({page}
   expect(report).not.toContain('http');
   await expect(panel(page).locator('#issueOpen')).toBeVisible();
 });
+
+test('bookmark launch focuses Apply so Enter immediately enables keyboard access', async ({page}) => {
+  const apply=panel(page).locator('#apply');
+  await expect(apply).toBeFocused();
+  await page.keyboard.press('Enter');
+  await expect(panel(page)).toBeHidden();
+  await expect(page.locator('#target')).toHaveAttribute('tabindex','0');
+});

@@ -261,6 +261,8 @@
   });
   observer.observe(document.body,{childList:true,subtree:true});
   scan();
+  // Bookmark launch: Enter immediately activates the default Apply action.
+  $('apply').focus({preventScroll:true});
 
   function reportData(el) {
     if(!el)return {tool:'Tab Focus Aid',problem:'General issue'};
